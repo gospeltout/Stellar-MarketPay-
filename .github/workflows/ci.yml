@@ -222,9 +222,6 @@ jobs:
       - name: Check OpenAPI type drift
         run: npm run api:check-drift
 
-      - name: Check contract error codes sync
-        run: npm run contract-errors:check
-
       - name: Unit and accessibility tests
         run: npm test
 

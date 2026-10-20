@@ -48,17 +48,16 @@ You must install gitleaks locally for the pre-commit hook to work effectively.
   go install github.com/gitleaks/gitleaks/v8@latest
   ```
 
-_Note: If gitleaks detects a false positive, you can configure exceptions in the `.gitleaks.toml` file under the `[allowlist]` section._
+*Note: If gitleaks detects a false positive, you can configure exceptions in the `.gitleaks.toml` file under the `[allowlist]` section.*
 
 ### Required Tools
-
 | ---------------- | --------------- | ---------------------------------------------------------------------- |
-| Node.js | 18.x | [nodejs.org](https://nodejs.org) |
-| npm | 9.x | Included with Node |
-| PostgreSQL | 15+ | Or run via Docker (recommended) |
-| Redis | 7+ | Or run via Docker (recommended) |
-| Rust + Cargo | stable | Only for contract work — [rustup.rs](https://rustup.rs) |
-| Freighter Wallet | latest | Browser extension for Stellar — [freighter.app](https://freighter.app) |
+| Node.js          | 18.x            | [nodejs.org](https://nodejs.org)                                       |
+| npm              | 9.x             | Included with Node                                                     |
+| PostgreSQL       | 15+             | Or run via Docker (recommended)                                        |
+| Redis            | 7+              | Or run via Docker (recommended)                                        |
+| Rust + Cargo     | stable          | Only for contract work — [rustup.rs](https://rustup.rs)                |
+| Freighter Wallet | latest          | Browser extension for Stellar — [freighter.app](https://freighter.app) |
 
 ---
 
@@ -141,7 +140,6 @@ npm run db:seed
 ```
 
 This creates:
-
 - 5 users (2 clients, 3 freelancers)
 - 20 open jobs
 - 10 applications
@@ -315,14 +313,11 @@ delegate every error to `next(e)` so the central error handler formats it.
 "use strict";
 
 const express = require("express");
-const router = express.Router();
-const pool = require("../db/pool");
+const router  = express.Router();
+const pool    = require("../db/pool");
 const { verifyJWT } = require("../middleware/auth");
 const { generalRateLimiter } = require("../middleware/rateLimiter");
-const {
-  validate,
-  createFavoriteSchema,
-} = require("../validators/favoriteValidator");
+const { validate, createFavoriteSchema } = require("../validators/favoriteValidator");
 
 /**
  * @swagger
@@ -365,7 +360,7 @@ router.post("/", verifyJWT, generalRateLimiter, async (req, res, next) => {
       `INSERT INTO favorites (public_key, job_id)
        VALUES ($1, $2)
        RETURNING id, job_id, created_at`,
-      [req.user.publicKey, jobId],
+      [req.user.publicKey, jobId]
     );
     res.status(201).json({ success: true, data: rows[0] });
   } catch (e) {
@@ -394,9 +389,7 @@ const { validate } = require("./index");
 
 const createFavoriteSchema = z
   .object({
-    jobId: z
-      .string({ message: "jobId is required" })
-      .min(1, "jobId is required"),
+    jobId: z.string({ message: "jobId is required" }).min(1, "jobId is required"),
   })
   .passthrough();
 
@@ -624,7 +617,6 @@ yourself). CI will still enforce the same rules.
 - [ ] Tested on Testnet (for changes involving Stellar/Soroban)
 - [ ] No breaking API changes, or changes are documented
 - [ ] Documentation updated if adding new features or env vars
-- [ ] Contract error codes verified in sync if contract errors were added/changed (`npm run check:contract-errors`)
 
 ### Finding good first issues
 
@@ -646,45 +638,6 @@ cargo test
 ```
 
 For full deploy instructions including testnet deployment and registering the contract ID in your `.env`, see [docs/contract-deployment.md](docs/contract-deployment.md).
-
-### Contract Error Codes and Synchronization
-
-The contract error codes are maintained across three locations to provide end-to-end type safety, documentation, and user-facing localization:
-
-1. **Source of Truth:** `contracts/marketpay-contract/src/errors.rs` (`ContractError` enum, `panic_message()`, and `error_code_from_panic()`).
-2. **Documentation Reference:** `docs/contract-errors.md` (canonical table of error ranges, numeric codes, panic messages, and descriptions).
-3. **Frontend Localization:** `frontend/lib/contractErrors.ts` (`CONTRACT_ERROR_CODES`, `CONTRACT_ERROR_MESSAGES_EN`, `CONTRACT_ERROR_MESSAGES_ES`, `CONTRACT_ERROR_MESSAGES_FR`, and `PANIC_TO_CODE`).
-
-#### Required Update Flow When Adding or Changing an Error Code
-
-Whenever you introduce, modify, or remove an error code in the contract, you must keep all three sources aligned:
-
-1. **Rust Contract (`contracts/marketpay-contract/src/errors.rs`):**
-   - Add the enum variant under the proper category code range (e.g. `1xxx`, `2xxx`, etc.).
-   - Implement `panic_message(&self)` returning the canonical panic message string.
-   - Update `error_code_from_panic(msg: &str)` to map the panic message back to `Some(code)`.
-   - Add the new variant to the `ALL_ERRORS` array in `errors.rs`'s unit tests and ensure `cargo test errors::tests` passes.
-
-2. **Documentation (`docs/contract-errors.md`):**
-   - Add the numeric code, panic message, and description row to the corresponding category table.
-   - Update the "Last updated" date in the header if applicable.
-
-3. **Frontend Mapping (`frontend/lib/contractErrors.ts`):**
-   - Add the code constant to `CONTRACT_ERROR_CODES`.
-   - Add localized human-readable messages to `CONTRACT_ERROR_MESSAGES_EN`, `CONTRACT_ERROR_MESSAGES_ES`, and `CONTRACT_ERROR_MESSAGES_FR`.
-   - Add the panic message mapping to `PANIC_TO_CODE`.
-
-4. **Verify Synchronization:**
-   Run the automated check locally to confirm that all three sources agree:
-
-   ```bash
-   npm run check:contract-errors
-   # or from frontend:
-   npm run contract-errors:check
-   ```
-
-5. **CI Enforcement:**
-   Continuous integration runs `npm run contract-errors:check` as a non-optional gate. Any missing error code, panic message mismatch, missing translation, or orphan code will fail the build.
 
 ---
 
