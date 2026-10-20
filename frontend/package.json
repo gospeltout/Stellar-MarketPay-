@@ -23,7 +23,8 @@
     "storybook:build": "storybook build -o storybook-static",
     "i18n:check": "node scripts/check-translations.mjs --strict",
     "api:generate": "node scripts/generate-api-types.mjs",
-    "api:check-drift": "node scripts/generate-api-types.mjs --check"
+    "api:check-drift": "node scripts/generate-api-types.mjs --check",
+    "contract-errors:check": "node ../scripts/verify-contract-errors.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

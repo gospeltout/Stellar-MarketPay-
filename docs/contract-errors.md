@@ -5,31 +5,31 @@ the corresponding `panic!` message, and a human-readable description.
 
 > **Source (codes):** `contracts/marketpay-contract/src/errors.rs`
 > **Source (frontend messages):** `frontend/lib/contractErrors.ts`
-> **Last updated:** 2026-07-28
+> **Last updated:** 2026-10-20
 
 ---
 
 ## Error Code Ranges
 
-| Range   | Category                    |
-|---------|-----------------------------|
-| 1xxx    | Initialization & admin      |
-| 2xxx    | Escrow lifecycle            |
-| 3xxx    | Milestones                  |
-| 4xxx    | Bidding & sealed-bid auction|
-| 5xxx    | Ratings & certificates      |
-| 6xxx    | Governance (DAO) & proposals|
-| 7xxx    | Disputes & arbitration      |
-| 8xxx    | Deliverable oracle & messaging|
-| 9xxx    | Job boost & extensions      |
-| 99xx    | Arithmetic & system         |
+| Range | Category                       |
+| ----- | ------------------------------ |
+| 1xxx  | Initialization & admin         |
+| 2xxx  | Escrow lifecycle               |
+| 3xxx  | Milestones                     |
+| 4xxx  | Bidding & sealed-bid auction   |
+| 5xxx  | Ratings & certificates         |
+| 6xxx  | Governance (DAO) & proposals   |
+| 7xxx  | Disputes & arbitration         |
+| 8xxx  | Deliverable oracle & messaging |
+| 9xxx  | Job boost & extensions         |
+| 99xx  | Arithmetic & system            |
 
 ---
 
 ## 1xxx — Initialization & Admin
 
 | Code | Panic Message                                          | Description                                          |
-|------|--------------------------------------------------------|------------------------------------------------------|
+| ---- | ------------------------------------------------------ | ---------------------------------------------------- |
 | 1001 | `Already initialized`                                  | `initialize()` called more than once                 |
 | 1002 | `Not initialized`                                      | Contract accessed before `initialize()`              |
 | 1003 | `Contract is frozen`                                   | All mutating operations blocked by admin freeze      |
@@ -49,146 +49,158 @@ the corresponding `panic!` message, and a human-readable description.
 | 1022 | `Referrer bonus cap must be non-negative`              | Negative cap value                                   |
 | 1023 | `Only admin can update the timeout`                    | Non-admin called `set_default_timeout_seconds()`     |
 | 1024 | `Timeout must be positive`                             | `timeout_seconds == 0`                               |
+| 1025 | `Only an admin can freeze the escrow`                  | Non-admin called `freeze_escrow()`                   |
+| 1026 | `Escrow is already frozen`                             | Attempted to freeze an already frozen escrow         |
+| 1027 | `Escrow is not frozen`                                 | Attempted to unfreeze an escrow that is not frozen   |
+| 1028 | `Cannot freeze a resolved escrow`                      | Attempted to freeze an escrow that has been resolved |
 
 ---
 
 ## 2xxx — Escrow Lifecycle
 
-| Code | Panic Message                                                | Description                                       |
-|------|--------------------------------------------------------------|---------------------------------------------------|
-| 2001 | `Amount must be positive`                                    | `amount <= 0` in `create_escrow()`                |
-| 2002 | `Referrer cannot be the client or freelancer`                | Referrer == client or freelancer                  |
-| 2003 | `Escrow already exists for this job`                         | Duplicate `job_id` in escrow creation             |
-| 2004 | `Escrow not found`                                           | No escrow stored for the given `job_id`           |
-| 2005 | `Only the freelancer can start work`                         | Wrong address called `start_work()`               |
-| 2006 | `Escrow is not in Locked state`                              | `start_work()` or `timeout_refund()` on wrong state|
-| 2007 | `Only the client can release escrow`                         | Wrong address called `release_escrow()`           |
-| 2008 | `Cannot release escrow in current status`                    | Escrow not in `Locked` or `InProgress`            |
-| 2009 | `Freelancer deliverable hash does not match or not submitted`| Deliverable hash mismatch on release              |
-| 2010 | `Only the client can request a refund`                       | Wrong address called `refund_escrow()`            |
-| 2011 | `Can only refund before work has started`                    | Escrow not in `Locked` state                      |
-| 2012 | `Only the client can request a timeout refund`               | Wrong address called `timeout_refund()`           |
-| 2013 | `Timeout period has not expired yet`                         | Called before timeout timestamp/ledger            |
+| Code | Panic Message                                                 | Description                                                |
+| ---- | ------------------------------------------------------------- | ---------------------------------------------------------- |
+| 2001 | `Amount must be positive`                                     | `amount <= 0` in `create_escrow()`                         |
+| 2002 | `Referrer cannot be the client or freelancer`                 | Referrer == client or freelancer                           |
+| 2003 | `Escrow already exists for this job`                          | Duplicate `job_id` in escrow creation                      |
+| 2004 | `Escrow not found`                                            | No escrow stored for the given `job_id`                    |
+| 2005 | `Only the freelancer can start work`                          | Wrong address called `start_work()`                        |
+| 2006 | `Escrow is not in Locked state`                               | `start_work()` or `timeout_refund()` on wrong state        |
+| 2007 | `Only the client can release escrow`                          | Wrong address called `release_escrow()`                    |
+| 2008 | `Cannot release escrow in current status`                     | Escrow not in `Locked` or `InProgress`                     |
+| 2009 | `Freelancer deliverable hash does not match or not submitted` | Deliverable hash mismatch on release                       |
+| 2010 | `Only the client can request a refund`                        | Wrong address called `refund_escrow()`                     |
+| 2011 | `Can only refund before work has started`                     | Escrow not in `Locked` state                               |
+| 2012 | `Only the client can request a timeout refund`                | Wrong address called `timeout_refund()`                    |
+| 2013 | `Timeout period has not expired yet`                          | Called before timeout timestamp/ledger                     |
+| 2014 | `Escrow already settled; deliverable hash cannot be updated`  | Escrow already settled; deliverable hash cannot be updated |
 
 ---
 
 ## 3xxx — Milestones
 
-| Code | Panic Message                            | Description                                  |
-|------|------------------------------------------|----------------------------------------------|
-| 3001 | `Maximum 5 milestones allowed`           | > 5 milestones in `create_escrow()`          |
-| 3002 | `Milestone percentage must be positive`  | Any milestone `percentage == 0`              |
-| 3003 | `Milestone percentages must sum to 100`  | Percentages total ≠ 100                      |
-| 3004 | `Only the client can release a milestone`| Wrong address called `release_milestone()`   |
-| 3005 | `Cannot release milestone in current status`| Wrong escrow state for milestone release |
-| 3006 | `Milestone index out of bounds`          | `index >= milestones.len()`                  |
-| 3007 | `Milestone already completed`            | Already-released milestone                   |
+| Code | Panic Message                                | Description                                                 |
+| ---- | -------------------------------------------- | ----------------------------------------------------------- |
+| 3001 | `Maximum 5 milestones allowed`               | > 5 milestones in `create_escrow()`                         |
+| 3002 | `Milestone percentage must be positive`      | Any milestone `percentage == 0`                             |
+| 3003 | `Milestone percentages must sum to 100`      | Percentages total ≠ 100                                     |
+| 3004 | `Only the client can release a milestone`    | Wrong address called `release_milestone()`                  |
+| 3005 | `Cannot release milestone in current status` | Wrong escrow state for milestone release                    |
+| 3006 | `Milestone index out of bounds`              | `index >= milestones.len()`                                 |
+| 3007 | `Milestone already completed`                | Already-released milestone                                  |
+| 3008 | `Previous milestone not approved`            | Attempted to release milestone before previous was approved |
 
 ---
 
 ## 4xxx — Bidding & Sealed-Bid Auction
 
-| Code | Panic Message                         | Description                                    |
-|------|---------------------------------------|------------------------------------------------|
-| 4001 | `Budget must be positive`             | `budget_amount <= 0` in `commit_budget()`      |
-| 4002 | `Budget commitment not found`         | `commit_budget()` not called first             |
-| 4003 | `Only the client can reveal the budget`| Wrong auth for `reveal_budget()`              |
-| 4004 | `Budget already revealed`             | Called `reveal_budget()` twice                 |
-| 4005 | `Bidding is closed`                   | `close_bidding()` already called               |
-| 4006 | `Bid commitment already submitted`    | Duplicate per freelancer                       |
-| 4007 | `Bidding not closed`                  | `reveal_bid()` before `close_bidding()`        |
-| 4008 | `Reveal window has closed`            | Ledger past `reveal_deadline_ledger`           |
-| 4009 | `Bid already revealed`                | Duplicate `reveal_bid()`                       |
-| 4010 | `Commitment verification failed`      | SHA-256 of amount+nonce doesn't match          |
+| Code | Panic Message                                         | Description                               |
+| ---- | ----------------------------------------------------- | ----------------------------------------- |
+| 4001 | `Budget must be positive`                             | `budget_amount <= 0` in `commit_budget()` |
+| 4002 | `Budget commitment not found`                         | `commit_budget()` not called first        |
+| 4003 | `Only the client can reveal the budget`               | Wrong auth for `reveal_budget()`          |
+| 4004 | `Budget already revealed`                             | Called `reveal_budget()` twice            |
+| 4005 | `Bidding is closed`                                   | `close_bidding()` already called          |
+| 4006 | `Bid commitment already submitted`                    | Duplicate per freelancer                  |
+| 4007 | `Bidding not closed`                                  | `reveal_bid()` before `close_bidding()`   |
+| 4008 | `Reveal window has closed`                            | Ledger past `reveal_deadline_ledger`      |
+| 4009 | `Bid already revealed`                                | Duplicate `reveal_bid()`                  |
+| 4010 | `Commitment verification failed`                      | SHA-256 of amount+nonce doesn't match     |
+| 4011 | `Bid does not meet the minimum increment requirement` | Bid does not meet required increment      |
 
 ---
 
 ## 5xxx — Ratings & Certificates
 
-| Code | Panic Message                                       | Description                                  |
-|------|-----------------------------------------------------|----------------------------------------------|
-| 5001 | `Score must be between 1 and 5`                     | Invalid rating score                         |
-| 5002 | `Ratings are allowed only after escrow release`     | Escrow not `Released`                        |
-| 5003 | `Client rating already submitted for this job`      | Duplicate client rating                      |
-| 5004 | `Freelancer rating already submitted for this job`  | Duplicate freelancer rating                  |
-| 5005 | `Escrow must be released to mint certificate`       | Escrow not in `Released` state               |
-| 5006 | `Certificate already minted`                        | Duplicate `mint_certificate()`               |
+| Code | Panic Message                                      | Description                    |
+| ---- | -------------------------------------------------- | ------------------------------ |
+| 5001 | `Score must be between 1 and 5`                    | Invalid rating score           |
+| 5002 | `Ratings are allowed only after escrow release`    | Escrow not `Released`          |
+| 5003 | `Client rating already submitted for this job`     | Duplicate client rating        |
+| 5004 | `Freelancer rating already submitted for this job` | Duplicate freelancer rating    |
+| 5005 | `Escrow must be released to mint certificate`      | Escrow not in `Released` state |
+| 5006 | `Certificate already minted`                       | Duplicate `mint_certificate()` |
 
 ---
 
 ## 6xxx — Governance (DAO) & Proposals
 
-| Code | Panic Message                                  | Description                               |
-|------|------------------------------------------------|-------------------------------------------|
-| 6001 | `Duration must be positive`                    | `duration_ledgers == 0`                   |
-| 6002 | `Proposal not found`                           | Invalid proposal ID                       |
-| 6003 | `Proposal already resolved`                    | Finalized proposal                        |
-| 6004 | `Voting period has ended`                      | Past `deadline_ledger`                    |
-| 6005 | `Only users with completed jobs can vote`      | `CompletedJobs(voter) == 0`               |
-| 6006 | `Voter has already cast a vote`                | Double-vote                               |
-| 6007 | `Voting period is not over yet`                | `resolve_proposal()` before deadline      |
-| 6008 | `Only admin can set the quorum`                | Non-admin calls `set_quorum()`            |
-| 6009 | `Quorum cannot exceed 50% (5000 bps)`          | `new_threshold_bps > 5000`                |
-| 6010 | `Quorum change proposal has not passed`        | Proposal unresolved or rejected           |
-| 6011 | `No matching quorum change proposal`           | Not a quorum proposal, value mismatch, or already applied |
+| Code | Panic Message                             | Description                                               |
+| ---- | ----------------------------------------- | --------------------------------------------------------- |
+| 6001 | `Duration must be positive`               | `duration_ledgers == 0`                                   |
+| 6002 | `Proposal not found`                      | Invalid proposal ID                                       |
+| 6003 | `Proposal already resolved`               | Finalized proposal                                        |
+| 6004 | `Voting period has ended`                 | Past `deadline_ledger`                                    |
+| 6005 | `Only users with completed jobs can vote` | `CompletedJobs(voter) == 0`                               |
+| 6006 | `Voter has already cast a vote`           | Double-vote                                               |
+| 6007 | `Voting period is not over yet`           | `resolve_proposal()` before deadline                      |
+| 6008 | `Only admin can set the quorum`           | Non-admin calls `set_quorum()`                            |
+| 6009 | `Quorum cannot exceed 50% (5000 bps)`     | `new_threshold_bps > 5000`                                |
+| 6010 | `Quorum change proposal has not passed`   | Proposal unresolved or rejected                           |
+| 6011 | `No matching quorum change proposal`      | Not a quorum proposal, value mismatch, or already applied |
+| 6012 | `TimelockActive`                          | Proposal execution timelock delay has not expired yet     |
+| 6013 | `Proposal has not been resolved`          | Attempted to execute an unresolved proposal               |
+| 6014 | `Proposal did not pass`                   | Attempted to execute a proposal that did not pass         |
+| 6015 | `Proposal already executed`               | Proposal has already been executed                        |
 
 ---
 
 ## 7xxx — Disputes & Arbitration
 
-| Code | Panic Message                                              | Description                                  |
-|------|------------------------------------------------------------|----------------------------------------------|
-| 7001 | `Only participants can raise a dispute`                    | Not client or freelancer                     |
-| 7002 | `Cannot dispute a resolved, frozen, or already-disputed escrow`| Wrong escrow status                   |
-| 7003 | `Only admin can resolve a dispute`                         | Non-admin called `resolve_dispute()`         |
-| 7004 | `Escrow is not in Disputed state`                          | Wrong status for dispute resolution          |
-| 7005 | `Only admin can update the dispute bond`                   | Non-admin called `set_dispute_bond()`        |
-| 7006 | `Bond amount must be positive`                             | `amount <= 0`                                |
-| 7007 | `Only admin can register arbitrators`                      | Non-admin called `register_arbitrator()`     |
-| 7008 | `Need at least 3 registered arbitrators`                   | Pool too small                               |
-| 7009 | `Only admin can open arbitration`                          | Non-admin called `open_arbitration()`        |
-| 7010 | `Arbitration case not found`                               | Invalid `case_id`                            |
-| 7011 | `Arbitration case is not open`                             | Case already resolved                        |
-| 7012 | `Only selected arbitrators can vote`                       | Not in the 3-person panel                    |
-| 7013 | `All votes already submitted`                              | Panel already voted                          |
-| 7014 | `Exactly 3 votes required`                                 | Incomplete votes                             |
+| Code | Panic Message                                                   | Description                              |
+| ---- | --------------------------------------------------------------- | ---------------------------------------- |
+| 7001 | `Only participants can raise a dispute`                         | Not client or freelancer                 |
+| 7002 | `Cannot dispute a resolved, frozen, or already-disputed escrow` | Wrong escrow status                      |
+| 7003 | `Only admin can resolve a dispute`                              | Non-admin called `resolve_dispute()`     |
+| 7004 | `Escrow is not in Disputed state`                               | Wrong status for dispute resolution      |
+| 7005 | `Only admin can update the dispute bond`                        | Non-admin called `set_dispute_bond()`    |
+| 7006 | `Bond amount must be positive`                                  | `amount <= 0`                            |
+| 7007 | `Only admin can register arbitrators`                           | Non-admin called `register_arbitrator()` |
+| 7008 | `Need at least 3 registered arbitrators`                        | Pool too small                           |
+| 7009 | `Only admin can open arbitration`                               | Non-admin called `open_arbitration()`    |
+| 7010 | `Arbitration case not found`                                    | Invalid `case_id`                        |
+| 7011 | `Arbitration case is not open`                                  | Case already resolved                    |
+| 7012 | `Only selected arbitrators can vote`                            | Not in the 3-person panel                |
+| 7013 | `All votes already submitted`                                   | Panel already voted                      |
+| 7014 | `Exactly 3 votes required`                                      | Incomplete votes                         |
 
 ---
 
 ## 8xxx — Deliverable Oracle & Messaging
 
-| Code | Panic Message                                        | Description                              |
-|------|------------------------------------------------------|------------------------------------------|
-| 8001 | `Only freelancer or oracle can submit deliverable`   | Wrong auth for `submit_deliverable()`    |
-| 8002 | `Escrow has no deliverable hash`                     | Used wrong `create_escrow` variant       |
-| 8003 | `IPFS CID cannot be empty`                           | Empty CID in `publish_message()`         |
+| Code | Panic Message                                      | Description                            |
+| ---- | -------------------------------------------------- | -------------------------------------- |
+| 8001 | `Only freelancer or oracle can submit deliverable` | Wrong auth for `submit_deliverable()`  |
+| 8002 | `Escrow has no deliverable hash`                   | Used wrong `create_escrow` variant     |
+| 8003 | `IPFS CID cannot be empty`                         | Empty CID in `publish_message()`       |
+| 8004 | `Message too long`                                 | Message exceeds maximum allowed length |
 
 ---
 
 ## 9xxx — Job Boost & Extensions
 
-| Code | Panic Message                                               | Description                               |
-|------|-------------------------------------------------------------|-------------------------------------------|
-| 9001 | `Minimum boost is 5 XLM`                                    | Payment below minimum                     |
-| 9002 | `Boost amount must be positive`                             | `amount <= 0`                             |
-| 9003 | `Only the client or freelancer can request an extension`    | Not a participant                         |
-| 9004 | `Cannot extend timeout in current status`                   | Wrong escrow state                        |
-| 9005 | `New timeout must be later than current timeout`            | New <= current timeout                    |
-| 9006 | `An extension request is already pending for this job`      | Duplicate request                         |
-| 9007 | `No pending extension request`                              | No request to approve                     |
-| 9008 | `Cannot approve your own extension request`                 | Same address as requester                 |
-| 9009 | `Only the client or freelancer can approve an extension`    | Not a participant                         |
+| Code | Panic Message                                            | Description               |
+| ---- | -------------------------------------------------------- | ------------------------- |
+| 9001 | `Minimum boost is 5 XLM`                                 | Payment below minimum     |
+| 9002 | `Boost amount must be positive`                          | `amount <= 0`             |
+| 9003 | `Only the client or freelancer can request an extension` | Not a participant         |
+| 9004 | `Cannot extend timeout in current status`                | Wrong escrow state        |
+| 9005 | `New timeout must be later than current timeout`         | New <= current timeout    |
+| 9006 | `An extension request is already pending for this job`   | Duplicate request         |
+| 9007 | `No pending extension request`                           | No request to approve     |
+| 9008 | `Cannot approve your own extension request`              | Same address as requester |
+| 9009 | `Only the client or freelancer can approve an extension` | Not a participant         |
 
 ---
 
 ## 99xx — Arithmetic & System
 
-| Code | Panic Message                 | Description                              |
-|------|-------------------------------|------------------------------------------|
-| 9901 | `Arithmetic overflow`         | Integer arithmetic overflow              |
-| 9902 | `Counter overflow`            | Storage counter exceeded limits          |
-| 9903 | `Timeout ledger overflow`     | Ledger sequence overflow                 |
-| 9904 | `Timeout timestamp overflow`  | Timestamp overflow                       |
+| Code | Panic Message                | Description                     |
+| ---- | ---------------------------- | ------------------------------- |
+| 9901 | `Arithmetic overflow`        | Integer arithmetic overflow     |
+| 9902 | `Counter overflow`           | Storage counter exceeded limits |
+| 9903 | `Timeout ledger overflow`    | Ledger sequence overflow        |
+| 9904 | `Timeout timestamp overflow` | Timestamp overflow              |
 
 ---
 
@@ -213,28 +225,33 @@ changing contract errors:
    panic message matches a known contract error. This prevents useful provider
    diagnostics from being discarded.
 
-When adding a new contract error, update all three message maps and the
-`PANIC_TO_CODE` map together. Also update the canonical Rust error reference
-above and verify the frontend typecheck before opening a PR.
+When adding a new contract error, update all three message maps (`en`, `es`, `fr`)
+and the `PANIC_TO_CODE` map together in `frontend/lib/contractErrors.ts`. Also update
+the canonical Rust error definition in `contracts/marketpay-contract/src/errors.rs`
+and the reference table above. Run `npm run check:contract-errors` to verify that
+all three sources are completely in sync before opening a PR.
 
 ### Examples
 
-| Input | Result |
-|-------|--------|
-| `Error(Contract, #1)` | Generic localized contract message |
-| `Error(Contract, #1): Escrow not found` | Escrow-not-found message |
-| `Soroban simulation failed: Bidding is closed` | Bidding-closed message |
-| `Provider unavailable` | Original provider diagnostic |
+| Input                                          | Result                             |
+| ---------------------------------------------- | ---------------------------------- |
+| `Error(Contract, #1)`                          | Generic localized contract message |
+| `Error(Contract, #1): Escrow not found`        | Escrow-not-found message           |
+| `Soroban simulation failed: Bidding is closed` | Bidding-closed message             |
+| `Provider unavailable`                         | Original provider diagnostic       |
 
 ## Usage in Frontend
 
 ```typescript
-import { parseContractError, getContractErrorMessage } from "@/lib/contractErrors";
+import {
+  parseContractError,
+  getContractErrorMessage,
+} from "@/lib/contractErrors";
 
 // Parse a raw Soroban simulation error into a localized message
 const friendlyMessage = parseContractError(
   "Soroban simulation failed: Escrow not found",
-  "es" // or use i18n.language
+  "es", // or use i18n.language
 );
 
 // Or map a known error code directly
@@ -243,4 +260,4 @@ const msg = getContractErrorMessage(2004, "fr"); // "Aucun séquestre trouvé po
 
 ---
 
-*See also: [contract-api-reference.md](./contract-api-reference.md) for function-level API documentation.*
+_See also: [contract-api-reference.md](./contract-api-reference.md) for function-level API documentation._
